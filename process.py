@@ -97,9 +97,11 @@ for video in videos:
 		"-r", "60",
 		"-i", f"{upscaled_path}/%07d." + ("jpg" if CONVERT_TO_JPG else "png"),
 		"-c:v", "libx264",
-		"-b:v", str(VIDEO_FINAL_BITRATE),
+		"-b:v", f"{VIDEO_FINAL_BITRATE}k",
 		"-pix_fmt", "yuv420p",
 		"-y",
 		f"{OUTPUT_FOLDER}/{video}",
 	]
+	print(f"Converting frames to video...")
+	subprocess.run(command, capture_output = False)
 

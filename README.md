@@ -2,7 +2,7 @@
 ## Dependencies
 - https://github.com/nihui/waifu2x-ncnn-vulkan
 - FFmpeg (installed and added to PATH)
-- Python 3.10+
+- Python 3.10+ (with the following module: `pillow`)
 
 # VideoUpscaler
 Simple Python program to upscale a video using 'waifu2x-ncnn-vulkan'

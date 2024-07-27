@@ -1,6 +1,7 @@
 
 ## Dependencies
 - https://github.com/nihui/waifu2x-ncnn-vulkan
+- FFmpeg (installed and added to PATH)
 - Python 3.10+
 
 # VideoUpscaler
@@ -13,5 +14,5 @@ Simple Python program to upscale a video using 'waifu2x-ncnn-vulkan'
 4. The upscaled video will be in the 'output' folder
 
 ## Pausing the program
-You can close the program whenever you want, you'll just need to run the `resume.py` script to continue the process from where it left off.
+You can close the program whenever you want, you'll just need to run the `python process.py` script to continue the process from where it left off.
 

@@ -92,15 +92,20 @@ for video in videos:
 			os.remove(f"{upscaled_path}/{frame}")
 	
 	# Convert the frames to a video
+	input_video_for_sound: str = f"{INPUT_FOLDER}/{video}"
 	command: list[str] = [
 		"ffmpeg",
-		"-r", "60",
-		"-i", f"{upscaled_path}/%07d." + ("jpg" if CONVERT_TO_JPG else "png"),
-		"-c:v", "libx264",
-		"-b:v", f"{VIDEO_FINAL_BITRATE}k",
-		"-pix_fmt", "yuv420p",
+		"-r", "60",							# Set the framerate to 60
+		"-i", f"{upscaled_path}/%07d." + ("jpg" if CONVERT_TO_JPG else "png"),	# Input frames
+		"-i", input_video_for_sound,		# Input video for sound
+		"-c:v", "libx264",					# Encode the video with x264
+		"-b:v", f"{VIDEO_FINAL_BITRATE}k",	# Set the video bitrate
+		"-c:a", "copy",						# Copy the audio without re-encoding
+		"-map", "0:v:0",					# Map the first input (frames) as video
+		"-map", "1:a:0",					# Map the second input (sound) as audio
+		"-pix_fmt", "yuv420p",				# Set the pixel format to yuv420p
 		"-y",
-		f"{OUTPUT_FOLDER}/{video}",
+		f"{OUTPUT_FOLDER}/{video}",			# Output video
 	]
 	print(f"Converting frames to video...")
 	subprocess.run(command, capture_output = False)

@@ -7,6 +7,10 @@ import shutil
 import subprocess
 from PIL import Image
 
+# Ask if we shutdown the computer after the process
+SHUTDOWN: bool = False
+if input("Shutdown the computer after the process? (y/N) ").lower() == "y":
+	SHUTDOWN = True
 
 # For each video in the input folder,
 for video in videos:
@@ -127,4 +131,9 @@ for video in videos:
 	]
 	print(f"Converting frames to video...")
 	subprocess.run(command, capture_output = False)
+
+# Shutdown the computer if needed
+if SHUTDOWN:
+	print("Shutting down the computer...")
+	subprocess.run(["shutdown", "/s", "/t", "0"], capture_output = False)
 

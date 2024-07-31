@@ -48,11 +48,22 @@ for video in videos:
 					os.remove(f"{extracted_path}/{frame}")
 	
 
-	# Get all the frames in each folder
+	# Convert all the frames to jpg if needed
 	upscaled_path: str = f"{images_path}/upscaled"
 	os.makedirs(upscaled_path, exist_ok = True)
-	frames: list[str] = os.listdir(extracted_path)
 	upscaled_frames: list[str] = os.listdir(upscaled_path)
+	if CONVERT_TO_JPG:
+		to_convert: list[str] = [frame for frame in upscaled_frames if frame.endswith(".png")]
+		print(f"Converting {len(to_convert)} frames to jpg...")
+
+		# Loop through the frames to convert them to jpg and refresh the list of upscaled frames
+		for frame in to_convert:
+			Image.open(f"{upscaled_path}/{frame}").save(f"{upscaled_path}/{frame.replace('.png', '.jpg')}", quality = JPG_QUALITY)
+			os.remove(f"{upscaled_path}/{frame}")
+		upscaled_frames = os.listdir(upscaled_path)
+
+	# Get all the frames in each folder
+	frames: list[str] = os.listdir(extracted_path)
 	not_upscaled_frames: list[str] = [frame for frame in frames if frame not in upscaled_frames]
 
 
@@ -112,6 +123,14 @@ for video in videos:
 		]
 		print(f"Upscaling frames with express mode...")
 		subprocess.run(command)
+
+		# Convert the frames to jpg
+		if CONVERT_TO_JPG:
+			print(f"Converting frames to jpg...")
+			for frame in os.listdir(upscaled_path):
+				if frame.endswith(".png"):
+					Image.open(f"{upscaled_path}/{frame}").save(f"{upscaled_path}/{frame.replace('.png', '.jpg')}", quality = JPG_QUALITY)
+					os.remove(f"{upscaled_path}/{frame}")
 	
 	# Convert the frames to a video
 	input_video_for_sound: str = f"{INPUT_FOLDER}/{video}"

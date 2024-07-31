@@ -1,29 +1,35 @@
 
 # Imports
 from config import *
+from print import *
 import sys
 import time
 import shutil
 import subprocess
 from PIL import Image
 
+# Enable colors on Windows 10 terminal
+os.system("color")
+
 # Ask if we shutdown the computer after the process
 SHUTDOWN: bool = False
-if input("Shutdown the computer after the process? (y/N) ").lower() == "y":
+info("Shutdown the computer after the process? (y/N)")
+if input().lower() == "y":
 	SHUTDOWN = True
+	info("The computer will shutdown after the process.")
 
 # For each video in the input folder,
 for video in videos:
 
 	# If the video has already been upscaled, skip it
 	if video in upscaled_videos:
-		print(f"'{video}' has already been processed, remove it from the output folder to reprocess it.")
+		warning(f"'{video}' has already been processed, remove it from the output folder to reprocess it.")
 		continue
 
 	# If the video is in the list of videos that have been partially processed, ask to restart or skip
 	images_path: str = f"{IMAGES_FOLDER}/{video}"
 	if video in progressed_videos:
-		print(f"'{video}' has already been partially processed, do you want to resume the process? (Y/n)")
+		warning(f"'{video}' has already been partially processed, do you want to resume the process? (Y/n)")
 		if input().lower() == "n":
 			shutil.rmtree(images_path, ignore_errors = True)
 	
@@ -36,12 +42,12 @@ for video in videos:
 	os.makedirs(extracted_path, exist_ok = True)
 	if not os.listdir(extracted_path):
 		command: list[str] = ["ffmpeg", "-i", f"{INPUT_FOLDER}/{video}", f"{extracted_path}/%07d.png"]
-		print(f"Extracting frames from '{video}'...")
+		debug(f"Extracting frames from '{video}'...")
 		subprocess.run(command, capture_output = True)
 
 		# Convert the frames to jpg
 		if CONVERT_TO_JPG:
-			print(f"Converting frames to jpg...")
+			debug(f"Converting frames to jpg...")
 			for frame in os.listdir(extracted_path):
 				if frame.endswith(".png"):
 					Image.open(f"{extracted_path}/{frame}").save(f"{extracted_path}/{frame.replace('.png', '.jpg')}", quality = JPG_QUALITY)
@@ -54,12 +60,13 @@ for video in videos:
 	upscaled_frames: list[str] = os.listdir(upscaled_path)
 	if CONVERT_TO_JPG:
 		to_convert: list[str] = [frame for frame in upscaled_frames if frame.endswith(".png")]
-		print(f"Converting {len(to_convert)} frames to jpg...")
+		debug(f"Converting {len(to_convert)} frames to jpg...")
 
 		# Loop through the frames to convert them to jpg and refresh the list of upscaled frames
-		for frame in to_convert:
+		for i, frame in enumerate(to_convert):
 			Image.open(f"{upscaled_path}/{frame}").save(f"{upscaled_path}/{frame.replace('.png', '.jpg')}", quality = JPG_QUALITY)
 			os.remove(f"{upscaled_path}/{frame}")
+			debug(f"Converted '{frame}' to jpg... ({i + 1}/{len(to_convert)})")
 		upscaled_frames = os.listdir(upscaled_path)
 
 	# Get all the frames in each folder
@@ -73,7 +80,7 @@ for video in videos:
 		upscaled_size: tuple[int, int] = Image.open(f"{upscaled_path}/{upscaled_frames[0]}").size
 		extracted_size: tuple[int, int] = Image.open(f"{extracted_path}/{frames[0]}").size
 		upscaled_ratio = upscaled_size[0] // extracted_size[0]
-		print(f"Detected upscaling ratio: {upscaled_ratio}")
+		info(f"Detected upscaling ratio: {upscaled_ratio}")
 	else:
 		if len(sys.argv) > 1:
 			upscaled_ratio = int(sys.argv[1])
@@ -97,7 +104,7 @@ for video in videos:
 			time_elapsed: float = time.perf_counter() - start_time
 			average_time: float = time_elapsed / (i + 1)
 			remaining_time: float = average_time * (len(not_upscaled_frames) - i)
-			print(f"Upscaling frame '{frame}'... ({i + 1}/{len(not_upscaled_frames)}),\tTime elapsed: {time_elapsed:.2f}s,\tAverage time: {average_time:.2f}s,\tRemaining time: {remaining_time:.2f}s")
+			debug(f"Upscaling frame '{frame}'... ({i + 1}/{len(not_upscaled_frames)}),\tTime elapsed: {time_elapsed:.2f}s,\tAverage time: {average_time:.2f}s,\tRemaining time: {remaining_time:.2f}s")
 			subprocess.run(command, capture_output = True)
 
 			# Convert the frame to jpg
@@ -109,9 +116,12 @@ for video in videos:
 		express_path: str = f"{images_path}/express"
 		shutil.rmtree(express_path, ignore_errors = True)
 		os.makedirs(express_path, exist_ok = True)
-		print(f"Copying unprocessed frames to express folder due to express mode...")
-		for frame in not_upscaled_frames:
+		info(f"Copying unprocessed frames to express folder due to express mode...")
+		for i, frame in enumerate(not_upscaled_frames):
+			if i % 100 == 0:
+				debug(f"Copying frame '{frame}'... ({i + 1}/{len(not_upscaled_frames)}),\tProgress: {i / len(not_upscaled_frames) * 100:.2f}%")
 			shutil.copy(f"{extracted_path}/{frame}", express_path)
+		info(f"Finished copying unprocessed frames to express folder.")
 		
 		# Upscale the frames
 		command: list[str] = [
@@ -121,16 +131,18 @@ for video in videos:
 			"-n", str(NOISE_LEVEL),
 			"-s", str(upscaled_ratio),
 		]
-		print(f"Upscaling frames with express mode...")
+		info(f"Upscaling frames with express mode...")
 		subprocess.run(command)
 
 		# Convert the frames to jpg
 		if CONVERT_TO_JPG:
-			print(f"Converting frames to jpg...")
-			for frame in os.listdir(upscaled_path):
+			debug(f"Converting frames to jpg...")
+			to_convert: list[str] = os.listdir(upscaled_path)
+			for i, frame in enumerate(to_convert):
 				if frame.endswith(".png"):
 					Image.open(f"{upscaled_path}/{frame}").save(f"{upscaled_path}/{frame.replace('.png', '.jpg')}", quality = JPG_QUALITY)
 					os.remove(f"{upscaled_path}/{frame}")
+					debug(f"Converted '{frame}' to jpg... ({i + 1}/{len(to_convert)}")
 	
 	# Convert the frames to a video
 	input_video_for_sound: str = f"{INPUT_FOLDER}/{video}"
@@ -148,11 +160,11 @@ for video in videos:
 		"-y",
 		f"{OUTPUT_FOLDER}/{video}",			# Output video
 	]
-	print(f"Converting frames to video...")
+	info(f"Converting frames to video...")
 	subprocess.run(command, capture_output = False)
 
 # Shutdown the computer if needed
 if SHUTDOWN:
-	print("Shutting down the computer...")
+	info("Shutting down the computer...")
 	subprocess.run(["shutdown", "/s", "/t", "0"], capture_output = False)
 

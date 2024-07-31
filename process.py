@@ -41,8 +41,6 @@ for video in videos:
 			for frame in os.listdir(extracted_path):
 				if frame.endswith(".png"):
 					Image.open(f"{extracted_path}/{frame}").save(f"{extracted_path}/{frame.replace('.png', '.jpg')}", quality = JPG_QUALITY)
-			for frame in os.listdir(extracted_path):
-				if frame.endswith(".png"):
 					os.remove(f"{extracted_path}/{frame}")
 	
 

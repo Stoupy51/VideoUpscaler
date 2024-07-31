@@ -67,27 +67,47 @@ for video in videos:
 
 
 	# For each frame that hasn't been upscaled yet,
-	start_time: float = time.perf_counter()
-	for i, frame in enumerate(not_upscaled_frames):
+	if not EXPRESS_MODE:
+		start_time: float = time.perf_counter()
+		for i, frame in enumerate(not_upscaled_frames):
+			
+			# Upscale the frame
+			command: list[str] = [
+				WAIFU2X_EXECUTABLE,
+				"-i", f"{extracted_path}/{frame}",
+				"-o", f"{upscaled_path}/{frame}",
+				"-n", str(NOISE_LEVEL),
+				"-s", str(upscaled_ratio),
+			]
+			time_elapsed: float = time.perf_counter() - start_time
+			average_time: float = time_elapsed / (i + 1)
+			remaining_time: float = average_time * (len(not_upscaled_frames) - i)
+			print(f"Upscaling frame '{frame}'... ({i + 1}/{len(not_upscaled_frames)}),\tTime elapsed: {time_elapsed:.2f}s,\tAverage time: {average_time:.2f}s,\tRemaining time: {remaining_time:.2f}s")
+			subprocess.run(command, capture_output = True)
+
+			# Convert the frame to jpg
+			if CONVERT_TO_JPG and frame.endswith(".png"):
+				Image.open(f"{upscaled_path}/{frame}").save(f"{upscaled_path}/{frame.replace('.png', '.jpg')}", quality = JPG_QUALITY)
+				os.remove(f"{upscaled_path}/{frame}")
+	else:
+		# Copy the unprocessed frames to a new folder
+		express_path: str = f"{images_path}/express"
+		shutil.rmtree(express_path, ignore_errors = True)
+		os.makedirs(express_path, exist_ok = True)
+		print(f"Copying unprocessed frames to express folder due to express mode...")
+		for frame in not_upscaled_frames:
+			shutil.copy(f"{extracted_path}/{frame}", express_path)
 		
-		# Upscale the frame
+		# Upscale the frames
 		command: list[str] = [
 			WAIFU2X_EXECUTABLE,
-			"-i", f"{extracted_path}/{frame}",
-			"-o", f"{upscaled_path}/{frame}",
+			"-i", express_path,
+			"-o", upscaled_path,
 			"-n", str(NOISE_LEVEL),
 			"-s", str(upscaled_ratio),
 		]
-		time_elapsed: float = time.perf_counter() - start_time
-		average_time: float = time_elapsed / (i + 1)
-		remaining_time: float = average_time * (len(not_upscaled_frames) - i)
-		print(f"Upscaling frame '{frame}'... ({i + 1}/{len(not_upscaled_frames)}),\tTime elapsed: {time_elapsed:.2f}s,\tAverage time: {average_time:.2f}s,\tRemaining time: {remaining_time:.2f}s")
-		subprocess.run(command, capture_output = True)
-
-		# Convert the frame to jpg
-		if CONVERT_TO_JPG and frame.endswith(".png"):
-			Image.open(f"{upscaled_path}/{frame}").save(f"{upscaled_path}/{frame.replace('.png', '.jpg')}", quality = JPG_QUALITY)
-			os.remove(f"{upscaled_path}/{frame}")
+		print(f"Upscaling frames with express mode...")
+		subprocess.run(command)
 	
 	# Convert the frames to a video
 	input_video_for_sound: str = f"{INPUT_FOLDER}/{video}"

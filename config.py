@@ -10,6 +10,8 @@ IMAGES_FOLDER: str = f"{ROOT}/images"
 CONVERT_TO_JPG: bool = True
 JPG_QUALITY: int = 95	# Range: 0-100
 VIDEO_FINAL_BITRATE: int = 240000	# 240 Mbps
+EXPRESS_MODE: bool = True	# If True, all the unprocessed frames will be copied to a new folder and fed to the program.
+							# Resulting in a faster process but no real progress tracking.
 
 # Waifu2x constants
 WAIFU2X_FOLDER: str = f"{ROOT}/waifu2x-ncnn-vulkan"

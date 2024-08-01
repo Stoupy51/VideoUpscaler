@@ -166,5 +166,5 @@ for video in videos:
 # Shutdown the computer if needed
 if SHUTDOWN:
 	info("Shutting down the computer...")
-	subprocess.run(["shutdown", "/s", "/t", "0"], capture_output = False)
+	subprocess.run(["shutdown", "/s", "/t", "0", "/f"], capture_output = False)
 
